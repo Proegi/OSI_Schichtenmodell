@@ -228,6 +228,7 @@
   .wire-liste tr.p-arp td{background:#FAF0D7;}
   .wire-liste tr.p-tcp td{background:#E7E6FF;}
   .wire-liste tr.p-http td{background:#E4FFC7;}
+  .wire-liste tr.p-dns td{background:#DAEEFF;}
   .wire-liste tr.sel td{background:#2F6FB5;color:#fff;}
   .baum{padding:6px 8px;border-bottom:1px solid var(--line);overflow-x:auto;min-height:150px;}
   .baum ul{list-style:none;margin:0;padding-left:14px;}
@@ -489,10 +490,24 @@
       <tr><td class="lab">Zielport in Frame 7</td><td><input type="text" id="m-port" inputmode="numeric" autocomplete="off" aria-label="Zielport Frame 7"></td></tr>
       <tr><td class="lab">Überschrift der Webseite, die der Server in Frame 7 schickt</td><td><input type="text" id="m-h1" autocomplete="off" aria-label="Überschrift der Webseite"></td></tr>
       <tr><td class="lab">Die Frames 3 bis 5 transportieren keine Nutzdaten (Len=0). Sie dienen dazu, dass</td><td><select id="m-hs" aria-label="Zweck der Frames 3 bis 5"><option value=""></option><option value="arp">der Client-PC die MAC-Adresse des Servers erfährt.</option><option value="teile">die Webseite in drei Teilen übertragen wird.</option><option value="tcp">TCP die Verbindung aufbaut, bevor HTTP-Daten fließen.</option><option value="fehler">der Router einen Fehler meldet.</option></select></td></tr>
-      <tr><td class="lab">Die Frames des Servers haben eine TTL von 63, die des Client-PCs von 64. Der Grund:</td><td><select id="m-ttl" aria-label="Grund für TTL 63"><option value=""></option><option value="a">Der Server ist langsamer als der Client-PC.</option><option value="b">Switch 2 hat die TTL um eins verringert.</option><option value="d">Jeder Frame verliert auf dem Kabel ein Byte.</option><option value="c">Der Router hat die TTL um eins verringert, bevor er das Paket weitergeleitet hat.</option></select></td></tr>
+      <tr><td class="lab">Die Abkürzung TTL im IP-Header steht für</td><td><select id="m-ttlname" aria-label="Bedeutung von TTL"><option value=""></option><option value="ttl">Time to Live</option><option value="ttt">Total Transfer Time</option><option value="tl">Transport Layer Length</option><option value="tlo">Time to Load</option></select></td></tr>
+      <tr><td class="lab">Die Frames des Servers haben eine TTL von 63, die des Client-PCs von 64. Der Grund:</td><td><select id="m-ttl" aria-label="Grund für TTL 63"><option value=""></option><option value="a">Der Server ist langsamer als der Client-PC.</option><option value="b">Switch 2 hat die TTL um eins verringert.</option><option value="d">Jeder Frame verliert auf dem Kabel ein Byte.</option><option value="c">Jeder Router auf dem Weg (jeder Hop) verringert die TTL um eins. Zwischen Server und Client-PC liegt ein Router.</option></select></td></tr>
     </table></div>
     <div class="answer"><button class="check" data-check="spur">Prüfen</button></div>
     <div class="msg" id="msg-spur"></div>
+  </div>
+  <div class="step">
+    <h3>Ohne Verbindungsaufbau</h3>
+    <p class="case">Die Webseite bindet ein Bild von bilder.lernort.example ein. Dafür fragt der Browser in den Frames 8 und 9 einen DNS-Server (10.0.5.53), welche IP-Adresse zu diesem Namen gehört.</p>
+    <div class="scroll"><table class="own">
+      <tr><td class="lab">Nummer des Frames, in dem der Client-PC zum ersten Mal Daten der Anwendung an den Webserver schickt</td><td><input type="text" id="u-erst" inputmode="numeric" autocomplete="off" aria-label="Erster Frame mit Daten"></td></tr>
+      <tr><td class="lab">Protokoll auf Schicht 4 in Frame 8</td><td><select id="u-proto" aria-label="Protokoll auf Schicht 4 in Frame 8"><option value=""></option><option value="tcp">TCP</option><option value="dns">DNS</option><option value="udp">UDP</option><option value="ip">IP</option></select></td></tr>
+      <tr><td class="lab">Zielport in Frame 8</td><td><input type="text" id="u-port" inputmode="numeric" autocomplete="off" aria-label="Zielport Frame 8"></td></tr>
+      <tr><td class="lab">Die Ziel-MAC-Adresse in Frame 8 gehört</td><td><select id="u-zmac" aria-label="Gerät mit der Ziel-MAC-Adresse in Frame 8"><option value=""></option><option value="dns">dem DNS-Server</option><option value="rc">dem Router, Anschluss Client-Netz</option><option value="srv">dem Webserver</option><option value="sw">Switch 1</option></select></td></tr>
+      <tr><td class="lab">Vor Frame 8 gibt es keinen Verbindungsaufbau wie in den Frames 3 bis 5. Der Grund:</td><td><select id="u-hs" aria-label="Grund für den fehlenden Verbindungsaufbau"><option value=""></option><option value="kennt">Der DNS-Server kennt den Client-PC schon aus den Frames 3 bis 5.</option><option value="udp">UDP schickt die Daten ohne Verbindungsaufbau los.</option><option value="leer">DNS-Anfragen enthalten keine Daten.</option><option value="router">Der Router hat die Verbindung schon aufgebaut.</option></select></td></tr>
+    </table></div>
+    <div class="answer"><button class="check" data-check="udp">Prüfen</button></div>
+    <div class="msg" id="msg-udp"></div>
   </div>
 </section>
 
@@ -613,7 +628,8 @@
     tk: "Gute Fehlersuche geht die Schichten von unten durch: Kommen Signale an (1)? Werden Frames zugestellt (2)? Stimmt der Weg ins Zielnetz (3)? Ist der Port erreichbar (4)? Erst danach lohnt der Blick auf Sitzung, Darstellung und Anwendung.",
     osi: "Wireshark zeigt die Kapselung direkt: Jede aufklappbare Zeile im Baum ist der Header einer Schicht, von außen nach innen. In der Liste steht das Protokoll der höchsten Schicht, die Wireshark im Frame erkennt. ARP-Frames haben keinen IP-Header, deshalb stehen dort MAC-Adressen.",
     arp: "Die ARP-Anfrage geht als Broadcast an alle Geräte im Netz, denn der Client-PC weiß noch nicht, wer die gesuchte IP-Adresse hat. Nur der Besitzer antwortet, direkt an den Fragenden.",
-    spur: "Die Quell-MAC-Adresse in Frame 7 gehört dem Router, nicht dem Server: Im Netz des Client-PCs ist der Router der letzte Absender. Die Frames 3 bis 5 sind der Verbindungsaufbau von TCP, erst danach fließen HTTP-Daten. Die TTL von 63 verrät, dass ein Router dazwischen liegt."
+    spur: "Die Quell-MAC-Adresse in Frame 7 gehört dem Router, nicht dem Server: Im Netz des Client-PCs ist der Router der letzte Absender. Die Frames 3 bis 5 sind der Verbindungsaufbau von TCP, erst danach fließen HTTP-Daten. TTL heißt Time to Live: Jeder Router, über den ein Paket läuft (jeder Hop), zieht eins ab. Kommt die TTL bei 0 an, wird das Paket verworfen. Die TTL von 63 verrät also, dass genau ein Router dazwischen liegt.",
+    udp: "TCP baut vor den Daten eine Verbindung auf (SYN, SYN-ACK, ACK). Diese Frames tragen keine Nutzdaten (Len=0), die erste Anfrage steckt erst in Frame 6. UDP spart sich den Verbindungsaufbau und schickt die Anfrage sofort los, für eine kurze DNS-Frage reicht das. Weil der DNS-Server in einem anderen Netz steht, geht auch Frame 8 an die MAC-Adresse des Routers."
   };
   function melde(k, r){
     var z = [];
@@ -1386,10 +1402,10 @@
   function hex4(n){ return "0x" + ("000" + n.toString(16)).slice(-4); }
 
   var M = {pc:"3c:52:82:1a:7e:05", rc:"00:1d:aa:4c:10:01", bc:"ff:ff:ff:ff:ff:ff", nul:"00:00:00:00:00:00"};
-  var IP = {pc:"192.168.10.23", rc:"192.168.10.1", srv:"10.0.5.80"};
+  var IP = {pc:"192.168.10.23", rc:"192.168.10.1", srv:"10.0.5.80", dns:"10.0.5.53", bild:"10.0.5.81"};
   var ISN_C = 0x1a2b3c4d, ISN_S = 0x5e6f7081;
   var GET = "GET /themen HTTP/1.1\r\nHost: 10.0.5.80\r\nUser-Agent: Mozilla/5.0\r\nAccept: text/html\r\n\r\n";
-  var BODY = "<html><body><h1>Themen</h1></body></html>";
+  var BODY = "<html><body><h1>Themen</h1><img src=\"http://bilder.lernort.example/logo.png\"></body></html>";
   var RESP = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: " + BODY.length + "\r\n\r\n" + BODY;
 
   function ethernet(dst, src, typ){
@@ -1446,6 +1462,38 @@
     }
     return {b:e.b.concat(iph, tcph, data), baum:baum};
   }
+  /* DNS über UDP: Anfrage und Antwort */
+  var DNS_NAME = "bilder.lernort.example", DNS_ID = 0x6c2a;
+  function dnsName(n){ var b = []; n.split(".").forEach(function(t){ b.push(t.length); b = b.concat(ascii(t)); }); b.push(0); return b; }
+  function udpFrame(vonC, antwort, id){
+    var es = vonC ? [M.rc, M.pc] : [M.pc, M.rc];
+    var src = vonC ? IP.pc : IP.dns, dst = vonC ? IP.dns : IP.pc;
+    var sp = vonC ? 54012 : 53, dp = vonC ? 53 : 54012, ttl = vonC ? 64 : 63;
+    var e = ethernet(es[0], es[1], 0x0800);
+    var frage = dnsName(DNS_NAME).concat(u16(1), u16(1));
+    var dns = u16(DNS_ID).concat(u16(antwort ? 0x8180 : 0x0100), u16(1), u16(antwort ? 1 : 0), u16(0), u16(0), frage);
+    var antw = [0xc0, 0x0c].concat(u16(1), u16(1), u32(300), u16(4), ipB(IP.bild));
+    if (antwort) dns = dns.concat(antw);
+    var ulen = 8 + dns.length, tot = 20 + ulen;
+    var iph = [0x45, 0].concat(u16(tot), u16(id), [0x40, 0, ttl, 17, 0, 0], ipB(src), ipB(dst));
+    var ipc = summe(iph); iph[10] = ipc >> 8; iph[11] = ipc & 255;
+    var udph = u16(sp).concat(u16(dp), u16(ulen), [0, 0]);
+    var uc = summe(ipB(src).concat(ipB(dst), [0, 17], u16(ulen), udph, dns)); udph[6] = uc >> 8; udph[7] = uc & 255;
+    var o = 14, t = 34, d = 42, q = d + 12;
+    var dk = [{t:"Transaction ID: " + hex4(DNS_ID), s:d, l:2}, {t:"Flags: " + hex4(antwort ? 0x8180 : 0x0100) + (antwort ? " Standard query response, No error" : " Standard query"), s:d + 2, l:2},
+      {t:"Questions: 1", s:d + 4, l:2}, {t:"Answer RRs: " + (antwort ? 1 : 0), s:d + 6, l:2},
+      {t:"Queries", s:q, l:frage.length, k:[{t:DNS_NAME + ": type A, class IN", s:q, l:frage.length}]}];
+    if (antwort) dk.push({t:"Answers", s:q + frage.length, l:antw.length, k:[{t:DNS_NAME + ": type A, class IN, addr " + IP.bild, s:q + frage.length, l:antw.length}]});
+    var baum = [e.n,
+      {t:"Internet Protocol Version 4, Src: " + src + ", Dst: " + dst, s:o, l:20, k:[
+        {t:"Version: 4", s:o, l:1}, {t:"Total Length: " + tot, s:o + 2, l:2}, {t:"Identification: " + hex4(id), s:o + 4, l:2},
+        {t:"Time to Live: " + ttl, s:o + 8, l:1}, {t:"Protocol: UDP (17)", s:o + 9, l:1}, {t:"Header Checksum: " + hex4(ipc), s:o + 10, l:2},
+        {t:"Source Address: " + src, s:o + 12, l:4}, {t:"Destination Address: " + dst, s:o + 16, l:4}]},
+      {t:"User Datagram Protocol, Src Port: " + sp + ", Dst Port: " + dp, s:t, l:8, k:[
+        {t:"Source Port: " + sp, s:t, l:2}, {t:"Destination Port: " + dp, s:t + 2, l:2}, {t:"Length: " + ulen, s:t + 4, l:2}, {t:"Checksum: " + hex4(uc), s:t + 6, l:2}]},
+      {t:"Domain Name System (" + (antwort ? "response" : "query") + ")", s:d, l:dns.length, k:dk}];
+    return {b:e.b.concat(iph, udph, dns), baum:baum};
+  }
   var FRAMES = [
     {src:M.pc, dst:M.bc, p:"ARP", info:"Who has " + IP.rc + "? Tell " + IP.pc, f:arpFrame(1, M.pc, IP.pc, M.nul, IP.rc, M.bc)},
     {src:M.rc, dst:M.pc, p:"ARP", info:IP.rc + " is at " + M.rc, f:arpFrame(2, M.rc, IP.rc, M.pc, IP.pc, M.pc)},
@@ -1453,7 +1501,9 @@
     {src:IP.srv, dst:IP.pc, p:"TCP", info:"80 → 51034 [SYN, ACK] Seq=0 Ack=1 Win=65160 Len=0", f:tcpFrame(false, 0x12, ISN_S, ISN_C + 1, "", 0x0000)},
     {src:IP.pc, dst:IP.srv, p:"TCP", info:"51034 → 80 [ACK] Seq=1 Ack=1 Win=64240 Len=0", f:tcpFrame(true, 0x10, ISN_C + 1, ISN_S + 1, "", 0x3f22)},
     {src:IP.pc, dst:IP.srv, p:"HTTP", info:"GET /themen HTTP/1.1", f:tcpFrame(true, 0x18, ISN_C + 1, ISN_S + 1, GET, 0x3f23)},
-    {src:IP.srv, dst:IP.pc, p:"HTTP", info:"HTTP/1.1 200 OK  (text/html)", f:tcpFrame(false, 0x18, ISN_S + 1, ISN_C + 1 + GET.length, RESP, 0x8a41)}
+    {src:IP.srv, dst:IP.pc, p:"HTTP", info:"HTTP/1.1 200 OK  (text/html)", f:tcpFrame(false, 0x18, ISN_S + 1, ISN_C + 1 + GET.length, RESP, 0x8a41)},
+    {src:IP.pc, dst:IP.dns, p:"DNS", info:"Standard query " + hex4(DNS_ID) + " A " + DNS_NAME, f:udpFrame(true, false, 0x3f24)},
+    {src:IP.dns, dst:IP.pc, p:"DNS", info:"Standard query response " + hex4(DNS_ID) + " A " + DNS_NAME + " A " + IP.bild, f:udpFrame(false, true, 0x1b07)}
   ];
   var wtb = document.querySelector("#wire-tab tbody");
   FRAMES.forEach(function(fr, i){
@@ -1548,7 +1598,13 @@
            {id:"m-port", soll:51034, tol:0, name:"Der Zielport", hints:[[80, 0, "Port 80 ist der Quellport des Servers in Frame 7."]]},
            {id:"m-h1", txt:function(t){ return t.toLowerCase().replace(/<[^>]*>/g, "").trim() === "themen"; }, name:"Die Überschrift", hints:[[function(){ return true; }, "Klicke in Frame 7 auf die Zeile Line-based text data und lies die Zeichen rechts im Hexdump."]]},
            {id:"m-hs", sel:["tcp"], name:"Der Zweck der Frames 3 bis 5"},
-           {id:"m-ttl", sel:["c"], name:"Der Grund für die TTL"}]
+           {id:"m-ttlname", sel:["ttl"], name:"Die Bedeutung von TTL", tipp:"Die TTL gibt an, wie lange ein Paket im Netz noch leben darf."},
+           {id:"m-ttl", sel:["c"], name:"Der Grund für die TTL"}],
+    udp: [{id:"u-erst", soll:6, tol:0, name:"Der erste Frame mit Daten", hints:[[3, 0, "Schau in der Info-Spalte auf Len=. Die Frames 3 bis 5 tragen keine Daten."], [5, 0, "Frame 5 hat Len=0, er schließt nur den Verbindungsaufbau ab."]]},
+          {id:"u-proto", sel:["udp"], name:"Das Protokoll auf Schicht 4", tipp:"Klicke Frame 8 an und schau, welcher Header nach dem IP-Header kommt."},
+          {id:"u-port", soll:53, tol:0, name:"Der Zielport", hints:[[54012, 0, "54012 ist der Quellport des Client-PCs."]]},
+          {id:"u-zmac", sel:["rc"], name:"Das Gerät mit der Ziel-MAC-Adresse", tipp:"Liegt der DNS-Server im selben Netz wie der Client-PC?"},
+          {id:"u-hs", sel:["udp"], name:"Der Grund für den fehlenden Verbindungsaufbau"}]
   };
 
   Array.prototype.forEach.call(document.querySelectorAll("button.check"), function(b){
