@@ -222,6 +222,12 @@
   .wire{border:1px solid var(--ink);background:#fff;font-family:var(--mono);font-size:.76rem;}
   .wire-titel{background:#2B2F33;color:#E9ECE6;padding:5px 10px;font-size:.7rem;letter-spacing:.08em;}
   .wire-liste{overflow-x:auto;border-bottom:1px solid var(--line);}
+  p.hinweis{font-family:var(--mono);font-size:.74rem;color:var(--ink-2);}
+  .wire-filter{display:flex;align-items:center;gap:10px;padding:5px 8px;border-bottom:1px solid var(--line);background:var(--card-2);}
+  .wire-filter input{flex:1;min-width:0;font-family:var(--mono);font-size:.76rem;padding:4px 7px;border:1px solid var(--line);background:#fff;}
+  .wire-filter input.gueltig{background:#AFFFAF;}
+  .wire-filter input.ungueltig{background:#FFAFAF;}
+  .wire-filter span{font-size:.68rem;color:var(--ink-3);white-space:nowrap;}
   .wire-liste table{border-collapse:collapse;width:100%;min-width:640px;}
   .wire-liste th{text-align:left;background:#ECEDEA;padding:3px 8px;font-weight:700;border-bottom:1px solid var(--line);}
   .wire-liste td{padding:2px 8px;white-space:nowrap;cursor:pointer;}
@@ -254,7 +260,7 @@
     @page{margin:14mm;}
     body{background:#fff;font-size:10.5pt;}
     .sheet{max-width:none;padding:0;}
-    .noprint,button.check,button.neben,.vt-tools,.werk-knoepfe,.werk-unten,.steuer,.ap-wahl{display:none!important;}
+    .wire-filter,.noprint,button.check,button.neben,.vt-tools,.werk-knoepfe,.werk-unten,.steuer,.ap-wahl{display:none!important;}
     section.task,header.top{box-shadow:none;margin-bottom:16px;}
     .step,.info,blockquote.fall,.ticket,.schicht,.werkbank,.netzplan,.sw-box,table.grid tr,table.own tr,.freitext,.wire-liste,.baum,.hex{break-inside:avoid;page-break-inside:avoid;}
     .task-head,.step h3,blockquote.fall{break-after:avoid;page-break-after:avoid;}
@@ -308,12 +314,6 @@
     </div>
     <div class="answer"><button class="check" data-check="turm">Prüfen</button></div>
     <div class="msg" id="msg-turm"></div>
-  </div>
-  <div class="step">
-    <h3>Nur vier Schichten?</h3>
-    <blockquote class="fall">Ein Kollege meint: „Im Netz läuft doch sowieso alles über TCP/IP. Die sieben Schichten des OSI-Modells muss sich heute niemand mehr merken.“</blockquote>
-    <p>Nimm Stellung zu dieser Aussage.</p>
-    <div class="freitext" id="a1-stellung" contenteditable="true" data-platzhalter="Deine Stellungnahme"></div>
   </div>
 </section>
 
@@ -450,10 +450,26 @@
     <p class="case">Während der Client-PC aus Aufgabe 4 die Seite aufruft, läuft auf ihm ein Mitschnittprogramm wie Wireshark. Klicke auf einen Frame, um ihn zu untersuchen. Wenn du auf eine Zeile im Baum klickst, siehst du darunter, welche Bytes dazugehören. Das klappt auch umgekehrt.</p>
     <div class="wire" id="wire">
       <div class="wire-titel">Mitschnitt: Ethernet, Client-PC 192.168.10.23</div>
+      <div class="wire-filter"><input type="text" id="w-filter" autocomplete="off" spellcheck="false" placeholder="Anzeigefilter anwenden, z. B. tcp" aria-label="Anzeigefilter"><span id="w-filter-info"></span></div>
       <div class="wire-liste"><table id="wire-tab"><thead><tr><th>Nr.</th><th>Source</th><th>Destination</th><th>Protocol</th><th>Length</th><th>Info</th></tr></thead><tbody></tbody></table></div>
       <div class="baum" id="baum"></div>
       <div class="hex" id="hex"></div>
     </div>
+  </div>
+  <div class="step">
+    <h3>Filtern wie im echten Wireshark</h3>
+    <p>Über der Liste gibt es eine Filterzeile wie im echten Wireshark. Ein Filter blendet alle Frames aus, die nicht passen. Probiere ihn aus. Trage dann jeweils einen Filter ein, der genau die gesuchten Frames zeigt, nicht mehr und nicht weniger.</p>
+    <p class="hinweis">Bausteine: arp, ip, tcp, udp, dns, http, ip.addr == …, ip.src == …, ip.dst == …, eth.src == …, eth.dst == …, tcp.port == …, udp.port == …. Mehrere Bedingungen verbindest du mit and oder or, mit not schließt du etwas aus.</p>
+    <div class="scroll"><table class="own">
+      <tr><td class="lab">nur die Frames, die einen ARP-Teil enthalten</td><td><input type="text" id="f-arp" autocomplete="off" spellcheck="false" aria-label="Filter ARP"></td></tr>
+      <tr><td class="lab">nur die Frames, die einen IP-Header enthalten</td><td><input type="text" id="f-ip" autocomplete="off" spellcheck="false" aria-label="Filter IP-Header"></td></tr>
+      <tr><td class="lab">nur die Frames, die einen TCP-Header enthalten</td><td><input type="text" id="f-tcp" autocomplete="off" spellcheck="false" aria-label="Filter TCP-Header"></td></tr>
+      <tr><td class="lab">nur die Frames von oder zu dem DNS-Server</td><td><input type="text" id="f-dns" autocomplete="off" spellcheck="false" aria-label="Filter DNS-Server"></td></tr>
+      <tr><td class="lab">nur die Frames, die der Client-PC an die MAC-Adresse des Routers schickt</td><td><input type="text" id="f-rt" autocomplete="off" spellcheck="false" aria-label="Filter Frames an den Router"></td></tr>
+      <tr><td class="lab">Der Filter tcp zeigt auch die Frames 6 und 7, obwohl dort in der Spalte Protocol HTTP steht. Der Grund:</td><td><select id="f-warum" aria-label="Grund für HTTP-Frames beim Filter tcp"><option value=""></option><option value="fehler">Der Filter arbeitet ungenau.</option><option value="port">Port 80 gehört zu TCP und HTTP gleichzeitig.</option><option value="kaps">HTTP steckt in einem TCP-Segment, die Frames enthalten also auch einen TCP-Header.</option><option value="gleich">HTTP und TCP sind zwei Namen für dasselbe Protokoll.</option></select></td></tr>
+    </table></div>
+    <div class="answer"><button class="check" data-check="filt">Prüfen</button></div>
+    <div class="msg" id="msg-filt"></div>
   </div>
   <div class="step">
     <h3>Wireshark trifft OSI</h3>
@@ -470,6 +486,23 @@
     </table></div>
     <div class="answer"><button class="check" data-check="osi">Prüfen</button></div>
     <div class="msg" id="msg-osi"></div>
+  </div>
+  <div class="step">
+    <h3>Header-Steckbrief</h3>
+    <p>Suche die Werte im Mitschnitt. Klicke dazu den Frame an und klappe die passende Zeile im Baum auf.</p>
+    <div class="scroll"><table class="grid">
+      <tr><th>Frame</th><th>Zeile im Baum</th><th>Feld</th><th>Wert</th></tr>
+      <tr><td class="mono">1</td><td>Ethernet II</td><td>Type</td><td><input type="text" id="s-typ" autocomplete="off" aria-label="Type in Frame 1"></td></tr>
+      <tr><td class="mono">3</td><td>Transmission Control Protocol</td><td>Flags (Name in Klammern)</td><td><input type="text" id="s-flags" autocomplete="off" aria-label="Flags in Frame 3"></td></tr>
+      <tr><td class="mono">4</td><td>Internet Protocol Version 4</td><td>Time to Live</td><td><input type="text" id="s-ttl" inputmode="numeric" autocomplete="off" aria-label="TTL in Frame 4"></td></tr>
+      <tr><td class="mono">6</td><td>Internet Protocol Version 4</td><td>Total Length</td><td><input type="text" id="s-len" inputmode="numeric" autocomplete="off" aria-label="Total Length in Frame 6"></td></tr>
+      <tr><td class="mono">6</td><td>Hypertext Transfer Protocol</td><td>User-Agent</td><td><input type="text" id="s-ua" autocomplete="off" aria-label="User-Agent in Frame 6"></td></tr>
+      <tr><td class="mono">7</td><td>Hypertext Transfer Protocol</td><td>Content-Type</td><td><input type="text" id="s-ct" autocomplete="off" aria-label="Content-Type in Frame 7"></td></tr>
+      <tr><td class="mono">8</td><td>Internet Protocol Version 4</td><td>Protocol</td><td><input type="text" id="s-proto" autocomplete="off" aria-label="Protocol in Frame 8"></td></tr>
+      <tr><td class="mono">9</td><td>Domain Name System</td><td>Answers, addr</td><td><input type="text" id="s-addr" autocomplete="off" aria-label="Antwortadresse in Frame 9"></td></tr>
+    </table></div>
+    <div class="answer"><button class="check" data-check="steck">Prüfen</button></div>
+    <div class="msg" id="msg-steck"></div>
   </div>
   <div class="step">
     <h3>Die ARP-Anfrage</h3>
@@ -629,6 +662,8 @@
     osi: "Wireshark zeigt die Kapselung direkt: Jede aufklappbare Zeile im Baum ist der Header einer Schicht, von außen nach innen. In der Liste steht das Protokoll der höchsten Schicht, die Wireshark im Frame erkennt. ARP-Frames haben keinen IP-Header, deshalb stehen dort MAC-Adressen.",
     arp: "Die ARP-Anfrage geht als Broadcast an alle Geräte im Netz, denn der Client-PC weiß noch nicht, wer die gesuchte IP-Adresse hat. Nur der Besitzer antwortet, direkt an den Fragenden.",
     spur: "Die Quell-MAC-Adresse in Frame 7 gehört dem Router, nicht dem Server: Im Netz des Client-PCs ist der Router der letzte Absender. Die Frames 3 bis 5 sind der Verbindungsaufbau von TCP, erst danach fließen HTTP-Daten. TTL heißt Time to Live: Jeder Router, über den ein Paket läuft (jeder Hop), zieht eins ab. Kommt die TTL bei 0 an, wird das Paket verworfen. Die TTL von 63 verrät also, dass genau ein Router dazwischen liegt.",
+    filt: "Ein Filter fragt, ob ein Frame einen bestimmten Header oder Wert enthält. Weil jede Schicht in die darunter eingepackt ist, findet der Filter tcp auch die HTTP-Frames und der Filter ip auch alle TCP- und DNS-Frames. ARP-Frames haben keinen IP-Header und fallen deshalb beim Filter ip heraus.",
+    steck: "Jedes Feld steht in genau einem Header: Type im Ethernet-Header sagt, was als Nächstes kommt, Protocol im IP-Header ebenso. Total Length zählt nur IP-Header plus Inhalt, ohne den Ethernet-Header.",
     udp: "TCP baut vor den Daten eine Verbindung auf (SYN, SYN-ACK, ACK). Diese Frames tragen keine Nutzdaten (Len=0), die erste Anfrage steckt erst in Frame 6. UDP spart sich den Verbindungsaufbau und schickt die Anfrage sofort los, für eine kurze DNS-Frage reicht das. Weil der DNS-Server in einem anderen Netz steht, geht auch Frame 8 an die MAC-Adresse des Routers."
   };
   function melde(k, r){
@@ -1505,6 +1540,53 @@
     {src:IP.pc, dst:IP.dns, p:"DNS", info:"Standard query " + hex4(DNS_ID) + " A " + DNS_NAME, f:udpFrame(true, false, 0x3f24)},
     {src:IP.dns, dst:IP.pc, p:"DNS", info:"Standard query response " + hex4(DNS_ID) + " A " + DNS_NAME + " A " + IP.bild, f:udpFrame(false, true, 0x1b07)}
   ];
+  /* Eckdaten je Frame direkt aus den Bytes lesen */
+  function macS(b, i){ return b.slice(i, i + 6).map(hex2).join(":"); }
+  FRAMES.forEach(function(fr, i){
+    var b = fr.f.b, typ = (b[12] << 8) + b[13], m = {p:{eth:true}, f:{"frame.number":[i + 1], "eth.src":[macS(b, 6)], "eth.dst":[macS(b, 0)]}};
+    m.f["eth.addr"] = m.f["eth.src"].concat(m.f["eth.dst"]);
+    if (typ === 0x0806) m.p.arp = true;
+    if (typ === 0x0800){
+      var ip = function(k){ return b.slice(k, k + 4).join("."); }, pr = b[23], tot = (b[16] << 8) + b[17];
+      m.p.ip = true;
+      m.f["ip.src"] = [ip(26)]; m.f["ip.dst"] = [ip(30)]; m.f["ip.addr"] = [ip(26), ip(30)]; m.f["ip.ttl"] = [b[22]];
+      var sp = (b[34] << 8) + b[35], dp = (b[36] << 8) + b[37];
+      var l4 = pr === 6 ? "tcp" : (pr === 17 ? "udp" : null);
+      if (l4){ m.p[l4] = true; m.f[l4 + ".srcport"] = [sp]; m.f[l4 + ".dstport"] = [dp]; m.f[l4 + ".port"] = [sp, dp]; }
+      if (l4 === "tcp" && tot > 40) m.p.http = true;
+      if (l4 === "udp" && (sp === 53 || dp === 53)) m.p.dns = true;
+    }
+    fr.meta = m;
+  });
+  function wfNorm(v){ return String(v).toLowerCase().replace(/[:\-]/g, "").replace(/^0+(?=\d)/, ""); }
+  /* kleiner Parser: or / and / not, Klammern, Feld == Wert, Protokollnamen */
+  function wfParse(text){
+    var tok = text.match(/==|!=|&&|\|\||!|\(|\)|[^\s()!=&|]+/g);
+    if (!tok) return null;
+    var pos = 0;
+    function peek(){ return tok[pos]; }
+    function weiter(){ return tok[pos++]; }
+    function oder(){ var l = und(); if (!l) return null; while (peek() === "or" || peek() === "||"){ weiter(); var r = und(); if (!r) return null; l = (function(a, b){ return function(m){ return a(m) || b(m); }; })(l, r); } return l; }
+    function und(){ var l = nicht(); if (!l) return null; while (peek() === "and" || peek() === "&&"){ weiter(); var r = nicht(); if (!r) return null; l = (function(a, b){ return function(m){ return a(m) && b(m); }; })(l, r); } return l; }
+    function nicht(){
+      if (peek() === "not" || peek() === "!"){ weiter(); var x = nicht(); return x ? function(m){ return !x(m); } : null; }
+      if (peek() === "("){ weiter(); var e = oder(); if (!e || weiter() !== ")") return null; return e; }
+      var w = weiter(); if (!w) return null; w = w.toLowerCase();
+      if (["eth","arp","ip","tcp","udp","dns","http"].indexOf(w) >= 0 && ["==","!=","eq","ne"].indexOf(peek()) < 0) return function(m){ return !!m.p[w]; };
+      var felder = ["eth.src","eth.dst","eth.addr","ip.src","ip.dst","ip.addr","ip.ttl","tcp.port","tcp.srcport","tcp.dstport","udp.port","udp.srcport","udp.dstport"];
+      if (felder.indexOf(w) < 0) return null;
+      var op = weiter(); if (["==","!=","eq","ne"].indexOf(op) < 0) return null;
+      var wert = weiter(); if (!wert) return null; wert = wfNorm(wert);
+      var gleich = op === "==" || op === "eq";
+      return function(m){ var v = m.f[w]; if (!v) return false; var hit = v.some(function(x){ return wfNorm(x) === wert; }); return gleich ? hit : !hit; };
+    }
+    var fn = oder();
+    return fn && pos === tok.length ? fn : null;
+  }
+  function wfTreffer(text){ var fn = wfParse(text); if (!fn) return null; var t = []; FRAMES.forEach(function(fr, i){ if (fn(fr.meta)) t.push(i + 1); }); return t; }
+  function wfSoll(soll){ return function(t){ var r = wfTreffer(t); return !!r && r.join() === soll.join(); }; }
+  function wfHinweis(soll){ return [[function(t){ return wfTreffer(t) === null; }, "Mindestens ein Filter ist ungültig. Probiere ihn erst oben in der Filterzeile aus, dort wird er grün, wenn Wireshark ihn versteht."],
+    [function(){ return true; }, "Teste deine Filter oben in der Filterzeile und vergleiche, welche Frames übrig bleiben."]]; }
   var wtb = document.querySelector("#wire-tab tbody");
   FRAMES.forEach(function(fr, i){
     var tr = document.createElement("tr"); tr.className = "p-" + fr.p.toLowerCase();
@@ -1568,6 +1650,18 @@
     markiere(best);
   }
   waehleFrame(0);
+  var wfIn = $("w-filter");
+  wfIn.addEventListener("input", function(){
+    var t = wfIn.value.trim(), rows = wtb.children;
+    wfIn.classList.remove("gueltig", "ungueltig");
+    if (t === ""){ Array.prototype.forEach.call(rows, function(r){ r.hidden = false; }); $("w-filter-info").textContent = ""; return; }
+    var fn = wfParse(t);
+    if (!fn){ wfIn.classList.add("ungueltig"); $("w-filter-info").textContent = "ungültiger Filter"; Array.prototype.forEach.call(rows, function(r){ r.hidden = false; }); return; }
+    wfIn.classList.add("gueltig");
+    var n = 0;
+    FRAMES.forEach(function(fr, i){ var an = fn(fr.meta); rows[i].hidden = !an; if (an) n++; });
+    $("w-filter-info").textContent = "Angezeigt: " + n + " von " + FRAMES.length;
+  });
   fuelle($("m-wer"), [["pc","Client-PC"],["sw1","Switch 1"],["rc","Router, Anschluss Client-Netz"],["rs","Router, Anschluss Server-Netz"],["srv","Server"]], "mwer");
 
   /* =================== Prüfdaten =================== */
@@ -1600,6 +1694,20 @@
            {id:"m-hs", sel:["tcp"], name:"Der Zweck der Frames 3 bis 5"},
            {id:"m-ttlname", sel:["ttl"], name:"Die Bedeutung von TTL", tipp:"Die TTL gibt an, wie lange ein Paket im Netz noch leben darf."},
            {id:"m-ttl", sel:["c"], name:"Der Grund für die TTL"}],
+    filt: [{id:"f-arp", txt:wfSoll([1,2]), name:"Der Filter für ARP", hints:wfHinweis()},
+           {id:"f-ip", txt:wfSoll([3,4,5,6,7,8,9]), name:"Der Filter für den IP-Header", hints:wfHinweis()},
+           {id:"f-tcp", txt:wfSoll([3,4,5,6,7]), name:"Der Filter für den TCP-Header", hints:wfHinweis()},
+           {id:"f-dns", txt:wfSoll([8,9]), name:"Der Filter für den DNS-Server", hints:wfHinweis()},
+           {id:"f-rt", txt:wfSoll([3,5,6,8]), name:"Der Filter für Frames an den Router", hints:[[function(t){ var r = wfTreffer(t); return !!r && r.indexOf(2) >= 0; }, "Frame 2 schickt der Router an den Client-PC. Gesucht ist die andere Richtung."], [function(t){ var r = wfTreffer(t); return !!r && r.indexOf(1) >= 0; }, "Frame 1 geht an alle (Broadcast), nicht an den Router."]].concat(wfHinweis())},
+           {id:"f-warum", sel:["kaps"], name:"Der Grund für die HTTP-Frames", tipp:"Denk an die Kapselung aus Aufgabe 3."}],
+    steck: [{id:"s-typ", txt:function(t){ t = t.toLowerCase(); return t.indexOf("arp") >= 0 || t.indexOf("0806") >= 0; }, name:"Type in Frame 1"},
+            {id:"s-flags", txt:function(t){ return t.toLowerCase().replace(/[^a-z]/g, "") === "syn"; }, name:"Flags in Frame 3", hints:[[function(t){ return t.toLowerCase().indexOf("ack") >= 0; }, "SYN, ACK steht in Frame 4. Gefragt ist Frame 3."]]},
+            {id:"s-ttl", soll:63, tol:0, name:"TTL in Frame 4", hints:[[64, 0, "64 ist die TTL des Client-PCs. Frame 4 kommt vom Server."]]},
+            {id:"s-len", soll:40 + GET.length, tol:0, name:"Total Length in Frame 6", hints:[[139, 0, "139 Bytes hat der ganze Frame. Total Length zählt nur ab dem IP-Header."]]},
+            {id:"s-ua", txt:function(t){ return t.toLowerCase().indexOf("mozilla") >= 0; }, name:"User-Agent in Frame 6"},
+            {id:"s-ct", txt:function(t){ return t.toLowerCase().indexOf("text/html") >= 0; }, name:"Content-Type in Frame 7"},
+            {id:"s-proto", txt:function(t){ t = t.toLowerCase(); return t.indexOf("udp") >= 0 || t.replace(/\D/g, "") === "17"; }, name:"Protocol in Frame 8"},
+            {id:"s-addr", txt:function(t){ return t.replace(/\s/g, "") === "10.0.5.81"; }, name:"Die Antwortadresse in Frame 9", hints:[[function(t){ return t.replace(/\s/g, "") === "10.0.5.53"; }, "Das ist der DNS-Server selbst. Gesucht ist die Adresse, die er als Antwort schickt."]]}],
     udp: [{id:"u-erst", soll:6, tol:0, name:"Der erste Frame mit Daten", hints:[[3, 0, "Schau in der Info-Spalte auf Len=. Die Frames 3 bis 5 tragen keine Daten."], [5, 0, "Frame 5 hat Len=0, er schließt nur den Verbindungsaufbau ab."]]},
           {id:"u-proto", sel:["udp"], name:"Das Protokoll auf Schicht 4", tipp:"Klicke Frame 8 an und schau, welcher Header nach dem IP-Header kommt."},
           {id:"u-port", soll:53, tol:0, name:"Der Zielport", hints:[[54012, 0, "54012 ist der Quellport des Client-PCs."]]},
@@ -1636,7 +1744,7 @@
 <script>
 (function(){
   var PREFIX = 'bsfi-osi:';
-  var EXCLUDE = '.steuer input';
+  var EXCLUDE = '.steuer input, #w-filter';
   var store = null;
   try { store = window.localStorage; store.setItem(PREFIX + '__t', '1'); store.removeItem(PREFIX + '__t'); }
   catch (e) { store = null; }
